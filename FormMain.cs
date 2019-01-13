@@ -13,7 +13,7 @@ namespace ExcelExport
 {
     public partial class FormMain : Form
     {
-        private string _exportBasePath = "";
+        private string _currentDirectory = "";
         public FormMain()
         {
             InitializeComponent();
@@ -21,34 +21,69 @@ namespace ExcelExport
 
         private void FormMain_Load(object sender, EventArgs e)
         {
-            String rootPath = Directory.GetCurrentDirectory();
-            String[] fileList =  Directory.GetFiles(rootPath, "*.xlsx");
+            _currentDirectory = Directory.GetCurrentDirectory();
+
+            LoadConfig();
+            RefreshXls();
+
+        }
+
+        private void RefreshXls()
+        {
+            String[] fileList = Directory.GetFiles(_currentDirectory, "*.xlsx");
 
             xlsFileList.Items.Clear();
-            foreach(String filename in fileList)
+            foreach (String filename in fileList)
             {
                 xlsFileList.Items.Add(filename, false);
             }
+        }
 
+        private void LoadConfig()
+        {
+            var configFile = _currentDirectory + "config.txt";
+            if (File.Exists(configFile))
+            {
+                StreamReader sr = new StreamReader(configFile, Encoding.Default);
+                export_path.Text = sr.ReadLine();
+            }
+        }
+
+        private void SaveConfig()
+        {
+            var configFile = _currentDirectory + "config.txt";
+            var fileStream = new FileStream(configFile, FileMode.CreateNew);
+            StreamWriter sw = new StreamWriter(fileStream);
+            sw.WriteLine(export_path.Text);
         }
 
         private void btn_Export_Click(object sender, EventArgs e)
         {
-            String rootPath = Directory.GetCurrentDirectory();
+     
             for (int i = 0; i < xlsFileList.Items.Count; i++)
             {
                 if (xlsFileList.GetItemChecked(i))
                 {
                     var fileName = xlsFileList.GetItemText(xlsFileList.Items[i]);
 
-                    var exporter_c = new Export(rootPath + fileName, _exportBasePath, "c", "json", textLog);
+                    var exporter_c = new Export(_currentDirectory + fileName, export_path.Text, "c", "json", textLog);
                     exporter_c.DoExport();
 
-                    var exporter_s = new Export(rootPath + fileName, _exportBasePath, "s", "lua", textLog);
+                    var exporter_s = new Export(_currentDirectory + fileName, export_path.Text, "s", "lua", textLog);
                     exporter_s.DoExport();
 
                 }
             }
+        }
+
+        private void client_path_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void FormMain_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            SaveConfig();
         }
     }
 }

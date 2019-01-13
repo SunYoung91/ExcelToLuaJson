@@ -36,7 +36,7 @@
             this.xlsFileList = new System.Windows.Forms.CheckedListBox();
             this.textLog = new System.Windows.Forms.TextBox();
             this.btn_Export = new System.Windows.Forms.Button();
-            this.client_path = new System.Windows.Forms.TextBox();
+            this.export_path = new System.Windows.Forms.TextBox();
             this.label2 = new System.Windows.Forms.Label();
             this.label3 = new System.Windows.Forms.Label();
             this.panel1.SuspendLayout();
@@ -124,12 +124,13 @@
             this.btn_Export.UseVisualStyleBackColor = true;
             this.btn_Export.Click += new System.EventHandler(this.btn_Export_Click);
             // 
-            // client_path
+            // export_path
             // 
-            this.client_path.Location = new System.Drawing.Point(483, 52);
-            this.client_path.Name = "client_path";
-            this.client_path.Size = new System.Drawing.Size(557, 21);
-            this.client_path.TabIndex = 3;
+            this.export_path.Location = new System.Drawing.Point(483, 52);
+            this.export_path.Name = "export_path";
+            this.export_path.Size = new System.Drawing.Size(557, 21);
+            this.export_path.TabIndex = 3;
+            this.export_path.TextChanged += new System.EventHandler(this.client_path_TextChanged);
             // 
             // label2
             // 
@@ -158,12 +159,13 @@
             this.ClientSize = new System.Drawing.Size(1052, 747);
             this.Controls.Add(this.label3);
             this.Controls.Add(this.label2);
-            this.Controls.Add(this.client_path);
+            this.Controls.Add(this.export_path);
             this.Controls.Add(this.btn_Export);
             this.Controls.Add(this.textLog);
             this.Controls.Add(this.panel1);
             this.Name = "FormMain";
             this.Text = "FormMain";
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.FormMain_FormClosing);
             this.Load += new System.EventHandler(this.FormMain_Load);
             this.panel1.ResumeLayout(false);
             this.panel1.PerformLayout();
@@ -182,7 +184,7 @@
         private System.Windows.Forms.Button btn_select_all;
         private System.Windows.Forms.TextBox textLog;
         private System.Windows.Forms.Button btn_Export;
-        private System.Windows.Forms.TextBox client_path;
+        private System.Windows.Forms.TextBox export_path;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Label label3;
     }
