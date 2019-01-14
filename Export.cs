@@ -18,7 +18,7 @@ namespace ExcelExport
             _ExportBastPath = exportBasePath;
             _ExportMode = exportMode;
             _ExportType = exportType;
-
+            _LogBox = logBox;
 
         }
 
@@ -33,11 +33,12 @@ namespace ExcelExport
                 reader.NextResult();
             }
 
+            stream.Close();
         }
 
         private void AddLog(string log)
         {
-            _LogBox.AppendText(DateTime.Now.ToString() + log);
+            _LogBox.AppendText(DateTime.Now.ToString() + "\t" + log + "\r\n");
         }
 
         private void ExportSheet(IExcelDataReader dataTable)
@@ -160,8 +161,6 @@ namespace ExcelExport
 
             }
             ProcessArray(exportSchema, exportPath, keyCount, exportHeader, exportEnd, fieldDatas);
-
-            // Console.WriteLine("export:{0},path:{1},keyCount:{2},Head : {3},end:{4}", exportSchema, exportPath, keyCount, exportHeader, exportEnd);
         }
 
         private void ProcessArray(string exprotSchema, string exportPath, int keyCount, string head, string end, FieldData[] fieldDatas)
@@ -172,7 +171,7 @@ namespace ExcelExport
 
                 var fieldData = fieldDatas[1];
 
-                var stream = new FileStream(_ExportBastPath + exportPath, FileMode.Create);
+                var stream = new FileStream(_ExportBastPath +"\\"+  exportPath, FileMode.OpenOrCreate);
                 var writer = new StreamWriter(stream);
 
                 if (keyCount == 0)

@@ -41,20 +41,23 @@ namespace ExcelExport
 
         private void LoadConfig()
         {
-            var configFile = _currentDirectory + "config.txt";
+            var configFile = _currentDirectory + "\\config.txt";
             if (File.Exists(configFile))
             {
                 StreamReader sr = new StreamReader(configFile, Encoding.Default);
                 export_path.Text = sr.ReadLine();
+                sr.Close();
             }
         }
 
         private void SaveConfig()
         {
-            var configFile = _currentDirectory + "config.txt";
-            var fileStream = new FileStream(configFile, FileMode.CreateNew);
+            var configFile = _currentDirectory + "\\config.txt";
+            var fileStream = new FileStream(configFile, FileMode.OpenOrCreate);
             StreamWriter sw = new StreamWriter(fileStream);
             sw.WriteLine(export_path.Text);
+            sw.Flush();
+            sw.Close();
         }
 
         private void btn_Export_Click(object sender, EventArgs e)
@@ -66,10 +69,10 @@ namespace ExcelExport
                 {
                     var fileName = xlsFileList.GetItemText(xlsFileList.Items[i]);
 
-                    var exporter_c = new Export(_currentDirectory + fileName, export_path.Text, "c", "json", textLog);
+                    var exporter_c = new Export( fileName, export_path.Text + "\\client\\", "c", "json", textLog);
                     exporter_c.DoExport();
 
-                    var exporter_s = new Export(_currentDirectory + fileName, export_path.Text, "s", "lua", textLog);
+                    var exporter_s = new Export( fileName, export_path.Text + "\\server\\", "s", "lua", textLog);
                     exporter_s.DoExport();
 
                 }
