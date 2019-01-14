@@ -12,6 +12,12 @@ namespace ExcelExport
         private string _ExportMode = "";//导出模式
         private string _ExportType = "json"; //导出模式
         private TextBox _LogBox = null;
+
+        private string _KeyValueSplitChar = "= "; //json 是 :  lua 是=
+        private string _ArrayFlagCharLeft = "{"; //json 是[ ,lua 是 }
+        private string _ArrayFlagCharRight = "}";
+
+
         public Export(string excelFileName, string exportBasePath, string exportMode, string exportType, TextBox logBox)
         {
             _ExportExcelFileName = excelFileName;
@@ -34,6 +40,25 @@ namespace ExcelExport
             }
 
             stream.Close();
+        }
+
+        private void setExportType(string type)
+        {
+            if (type == "lua")
+            {
+                _KeyValueSplitChar = "=";
+                _ArrayFlagCharLeft = "{";
+                _ArrayFlagCharRight = "}";
+            } else if (type == "json")
+            {
+                _KeyValueSplitChar = ":";
+                _ArrayFlagCharLeft = "[";
+                _ArrayFlagCharRight = "]";
+            }
+            else
+            {
+                throw new Exception("不支持的导出语言格式");
+            }
         }
 
         private void AddLog(string log)
@@ -176,7 +201,7 @@ namespace ExcelExport
 
                 if (keyCount == 0)
                 {
-                    writer.WriteLine("[");
+                    writer.WriteLine(_ArrayFlagCharLeft);
                 }
                 else
                 {
@@ -192,11 +217,11 @@ namespace ExcelExport
                         var keyText = fieldDatas[i].dataList[rowIndex];
                         if (typeof(string) == fieldDatas[i].fieldType)
                         {
-                            writer.WriteLine(keyText + ":" + "{");
+                            writer.WriteLine(keyText + _KeyValueSplitChar + "{");
                         }
                         else
                         {
-                            writer.WriteLine('"' + keyText + '"' + ":" + "{");
+                            writer.WriteLine('"' + keyText + '"' + _KeyValueSplitChar + "{");
                         }
 
                     }
@@ -208,11 +233,11 @@ namespace ExcelExport
                         var type = data.fieldType;
                         if (typeof(double) == type)
                         {
-                            writer.WriteLine('"' + data.fieldName + '"' + ":" + data.dataList[rowIndex] + ",");
+                            writer.WriteLine('"' + data.fieldName + '"' + _KeyValueSplitChar + data.dataList[rowIndex] + ",");
                         }
                         else if (typeof(string) == type)
                         {
-                            writer.WriteLine('"' + data.fieldName + '"' + ":" + data.dataList[rowIndex] + ",");
+                            writer.WriteLine('"' + data.fieldName + '"' + _KeyValueSplitChar + data.dataList[rowIndex] + ",");
                         }
                     }
 
@@ -231,7 +256,7 @@ namespace ExcelExport
 
                 if (keyCount == 0)
                 {
-                    writer.WriteLine("]");
+                    writer.WriteLine(_ArrayFlagCharRight);
                 }
                 else
                 {
