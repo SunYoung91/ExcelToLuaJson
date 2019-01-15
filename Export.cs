@@ -50,14 +50,14 @@ namespace ExcelExport
         {
             if (type == "lua")
             {
-                _KeyValueSplitChar = "=";
+                _KeyValueSplitChar = " = ";
                 _ArrayFlagCharLeft = "{";
                 _ArrayFlagCharRight = "}";
                 _WrapKey = "";
                 _WrapString = "\"";
             } else if (type == "json")
             {
-                _KeyValueSplitChar = ":";
+                _KeyValueSplitChar = " : ";
                 _ArrayFlagCharLeft = "[";
                 _ArrayFlagCharRight = "]";
                 _WrapKey = "\"";
@@ -74,9 +74,16 @@ namespace ExcelExport
             return _WrapKey + key + _WrapKey;
         }
 
-        private string  WrapString(string str)
+        private string  WrapString(string str , Type fieldType)
         {
-            return _WrapString + str + _WrapString;
+            if (typeof(string) == fieldType)
+            {
+                return _WrapString + str + _WrapString;
+            } else
+            {
+                return str;
+            }
+            
         }
 
         private void AddLog(string log)
@@ -247,7 +254,101 @@ namespace ExcelExport
             } else if (_ExportType == "json")
             {
 
+                if (keyCount == 0)
+                {
+                    stream.WriteLine("\r\n" +_ArrayFlagCharRight);
+                }
+                else
+                {
+                    stream.WriteLine("\r\n" + "}");
+                }
             }
+        }
+
+        private void ExportTiny(FieldData[] fieldDatas ,StreamWriter writer)
+        {
+
+            var fieldDataKey = fieldDatas[1];
+            var fieldDataValue = fieldDatas[2];
+            
+            if (typeof(string) == fieldDataValue.fieldType)
+            {
+                for (int rowIndex = 0; rowIndex < fieldDataKey.rowCount; rowIndex++)
+                {           
+                    writer.WriteLine("\t" + WrapKey(fieldDataKey.dataList[rowIndex]) + _KeyValueSplitChar + "\"" + fieldDataValue.dataList[rowIndex] + "\",");
+                }
+            } else
+            {
+                for (int rowIndex = 0; rowIndex < fieldDataKey.rowCount; rowIndex++)
+                {
+                    writer.WriteLine("\t" + WrapKey(fieldDataKey.dataList[rowIndex]) + _KeyValueSplitChar + fieldDataValue.dataList[rowIndex] + ",");
+                }
+            }
+
+
+        }
+
+        private void ExportBase(FieldData[] fieldDatas, StreamWriter writer,int keyCount)
+        {
+            var fieldData = fieldDatas[1];
+            for (int rowIndex = 0; rowIndex < fieldData.rowCount; rowIndex++)
+            {
+
+                var tabPreFix = "";
+                //处理KeyCount
+                for (int i = 1; i <= keyCount; i++)
+                {
+                    var keyText = fieldDatas[i].dataList[rowIndex];
+                    if (typeof(string) == fieldDatas[i].fieldType)
+                    {
+                        writer.Write(keyText + _KeyValueSplitChar + "{");
+                    }
+                    else
+                    {
+                        writer.Write(WrapKey(keyText) + _KeyValueSplitChar + "{");
+                    }
+
+                    tabPreFix += "\t";
+
+                }
+
+                writer.Write("\r\n");
+
+                //导出数据部分
+                for (int i = 1; i < fieldDatas.Length; i++)
+                {
+                    var data = fieldDatas[i];
+
+                    var type = data.fieldType;
+                        
+                    if (typeof(double) == type || typeof(string) == type)
+                    {
+
+                        if (i != 1)
+                        {
+                            writer.Write(",\r\n");
+                        }
+
+                        writer.Write(tabPreFix + WrapKey(data.fieldName) + _KeyValueSplitChar + WrapString(data.dataList[rowIndex], type));
+
+
+                    }
+            
+                    
+                }
+
+                for (int i = 1; i <= keyCount; i++)
+                {
+                    writer.Write("}");
+                }
+
+                if (rowIndex != fieldData.rowCount - 1)
+                {
+                    writer.WriteLine(",");
+                }
+
+            }
+
         }
 
         private void ProcessArray(string exprotSchema, string exportPath, int keyCount, string head, string end, FieldData[] fieldDatas)
@@ -265,66 +366,25 @@ namespace ExcelExport
             CheckCreateDir(targetPath);
                
 
-            var stream = new FileStream(_ExportBastPath +"\\"+  exportPath, FileMode.OpenOrCreate);
+            var stream = new FileStream(_ExportBastPath +"\\"+  exportPath, FileMode.Create);
             var writer = new StreamWriter(stream);
+
+            //如果是tiny 并且是导出为json 那么这里恒为1 否则会被判定为array.
+            if (exprotSchema == "tiny" && _ExportType == "json")
+            {
+                keyCount = 1;
+            }
+
             AppendHeader(writer, head  ,keyCount);
               
 
-            for (int rowIndex = 0; rowIndex < fieldData.rowCount; rowIndex++)
+            if (exprotSchema == "tiny")
             {
-
-                //处理KeyCount
-                for (int i = 1; i <= keyCount; i++)
-                {
-                    var keyText = fieldDatas[i].dataList[rowIndex];
-                    if (typeof(string) == fieldDatas[i].fieldType)
-                    {
-                        writer.Write(keyText + _KeyValueSplitChar + "{");
-                    }
-                    else
-                    {
-                        writer.Write(WrapKey(keyText) + _KeyValueSplitChar + "{");
-                    }
-
-                }
-
-                for (int i = 1; i < fieldDatas.Length; i++)
-                {
-                    var data = fieldDatas[i];
-
-                    var type = data.fieldType;
-                    if (typeof(double) == type)
-                    {
-                        writer.WriteLine(WrapKey(data.fieldName) + _KeyValueSplitChar + data.dataList[rowIndex] + ",");
-                    }
-                    else if (typeof(string) == type)
-                    {
-                        writer.WriteLine(WrapKey(data.fieldName) + _KeyValueSplitChar + WrapString(data.dataList[rowIndex]) + ",");
-                    }
-                }
-
-
-                for (int i = 1; i <= keyCount; i++)
-                {
-                    writer.Write("}");
-                }
-
-                if (rowIndex != fieldData.rowCount - 1)
-                {
-                    writer.WriteLine(",");
-                }
-
-            }
-
-            if (keyCount == 0)
+                ExportTiny(fieldDatas, writer);
+            }else if(exprotSchema == "base")
             {
-                writer.WriteLine(_ArrayFlagCharRight);
+                ExportBase(fieldDatas, writer, keyCount);
             }
-            else
-            {
-                writer.WriteLine("}");
-            }
-
 
 
             AppendEnd(writer, end , keyCount);

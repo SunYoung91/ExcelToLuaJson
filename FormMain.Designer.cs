@@ -101,6 +101,7 @@
             this.xlsFileList.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+            this.xlsFileList.CheckOnClick = true;
             this.xlsFileList.Font = new System.Drawing.Font("微软雅黑", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
             this.xlsFileList.FormattingEnabled = true;
             this.xlsFileList.Location = new System.Drawing.Point(3, 88);
