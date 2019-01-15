@@ -12,10 +12,12 @@ namespace ExcelExport
         private string _ExportMode = "";//导出模式
         private string _ExportType = "json"; //导出模式
         private TextBox _LogBox = null;
-
         private string _KeyValueSplitChar = "= "; //json 是 :  lua 是=
         private string _ArrayFlagCharLeft = "{"; //json 是[ ,lua 是 }
         private string _ArrayFlagCharRight = "}";
+        private string _WrapKey = "";
+        private string _WrapString = ""; 
+
 
 
         public Export(string excelFileName, string exportBasePath, string exportMode, string exportType, TextBox logBox)
@@ -25,8 +27,10 @@ namespace ExcelExport
             _ExportMode = exportMode;
             _ExportType = exportType;
             _LogBox = logBox;
-
+            SetExportType(exportType);
         }
+
+
 
         public void DoExport()
         {
@@ -42,23 +46,37 @@ namespace ExcelExport
             stream.Close();
         }
 
-        private void setExportType(string type)
+        private void SetExportType(string type)
         {
             if (type == "lua")
             {
                 _KeyValueSplitChar = "=";
                 _ArrayFlagCharLeft = "{";
                 _ArrayFlagCharRight = "}";
+                _WrapKey = "";
+                _WrapString = "\"";
             } else if (type == "json")
             {
                 _KeyValueSplitChar = ":";
                 _ArrayFlagCharLeft = "[";
                 _ArrayFlagCharRight = "]";
+                _WrapKey = "\"";
+                _WrapString = "\"";
             }
             else
             {
                 throw new Exception("不支持的导出语言格式");
             }
+        }
+
+        private string WrapKey(string key)
+        {
+            return _WrapKey + key + _WrapKey;
+        }
+
+        private string  WrapString(string str)
+        {
+            return _WrapString + str + _WrapString;
         }
 
         private void AddLog(string log)
@@ -185,91 +203,136 @@ namespace ExcelExport
                 }
 
             }
+
             ProcessArray(exportSchema, exportPath, keyCount, exportHeader, exportEnd, fieldDatas);
+        }
+
+
+        private void CheckCreateDir(string dir)
+        {
+            var targetDir = Directory.GetParent(dir).ToString();
+            if (!Directory.Exists(targetDir))
+            {
+                AddLog(string.Format("目录:{0} , 不存在 进行创建...", targetDir));
+                Directory.CreateDirectory(targetDir);
+                AddLog(string.Format("目录:{0} , 创建 完成。", targetDir));
+            }
+        }
+
+        //添加导出文件头
+        private void AppendHeader (StreamWriter stream , string str , int keyCount )
+        {
+            if (_ExportType == "lua")
+            {
+                stream.WriteLine(str);
+            } else if (_ExportType == "json")
+            {
+                if (keyCount == 0)
+                {
+                    stream.WriteLine(_ArrayFlagCharLeft);
+                }
+                else
+                {
+                    stream.WriteLine("{");
+                }
+            }
+        }
+
+        //添加导出文件尾
+        private void AppendEnd (StreamWriter stream , string str , int keyCount)
+        {
+            if (_ExportType == "lua")
+            {
+                stream.WriteLine(str);
+            } else if (_ExportType == "json")
+            {
+
+            }
         }
 
         private void ProcessArray(string exprotSchema, string exportPath, int keyCount, string head, string end, FieldData[] fieldDatas)
         {
-            //第一行数据不参与导出
-            if (fieldDatas.Length >= 1)
+            //如果只有一列数据 那么不导出 因为第一列是备注说明
+            if (fieldDatas.Length <= 1)
+            {
+                AddLog(string.Format("欲导出文件: {0 },数据列数为 :0 , 跳过 ", exportPath));
+                return;
+            }
+
+
+            var fieldData = fieldDatas[1];
+            var targetPath = _ExportBastPath + "\\" + exportPath;
+            CheckCreateDir(targetPath);
+               
+
+            var stream = new FileStream(_ExportBastPath +"\\"+  exportPath, FileMode.OpenOrCreate);
+            var writer = new StreamWriter(stream);
+            AppendHeader(writer, head  ,keyCount);
+              
+
+            for (int rowIndex = 0; rowIndex < fieldData.rowCount; rowIndex++)
             {
 
-                var fieldData = fieldDatas[1];
-
-                var stream = new FileStream(_ExportBastPath +"\\"+  exportPath, FileMode.OpenOrCreate);
-                var writer = new StreamWriter(stream);
-
-                if (keyCount == 0)
+                //处理KeyCount
+                for (int i = 1; i <= keyCount; i++)
                 {
-                    writer.WriteLine(_ArrayFlagCharLeft);
-                }
-                else
-                {
-                    writer.WriteLine("{");
-                }
-
-                for (int rowIndex = 0; rowIndex < fieldData.rowCount; rowIndex++)
-                {
-
-                    //处理KeyCount
-                    for (int i = 1; i <= keyCount; i++)
+                    var keyText = fieldDatas[i].dataList[rowIndex];
+                    if (typeof(string) == fieldDatas[i].fieldType)
                     {
-                        var keyText = fieldDatas[i].dataList[rowIndex];
-                        if (typeof(string) == fieldDatas[i].fieldType)
-                        {
-                            writer.WriteLine(keyText + _KeyValueSplitChar + "{");
-                        }
-                        else
-                        {
-                            writer.WriteLine('"' + keyText + '"' + _KeyValueSplitChar + "{");
-                        }
-
+                        writer.Write(keyText + _KeyValueSplitChar + "{");
                     }
-
-                    for (int i = 1; i < fieldDatas.Length; i++)
+                    else
                     {
-                        var data = fieldDatas[i];
-
-                        var type = data.fieldType;
-                        if (typeof(double) == type)
-                        {
-                            writer.WriteLine('"' + data.fieldName + '"' + _KeyValueSplitChar + data.dataList[rowIndex] + ",");
-                        }
-                        else if (typeof(string) == type)
-                        {
-                            writer.WriteLine('"' + data.fieldName + '"' + _KeyValueSplitChar + data.dataList[rowIndex] + ",");
-                        }
-                    }
-
-
-                    for (int i = 1; i <= keyCount; i++)
-                    {
-                        writer.WriteLine("}");
-                    }
-
-                    if (rowIndex != fieldData.rowCount - 1)
-                    {
-                        writer.WriteLine(",");
+                        writer.Write(WrapKey(keyText) + _KeyValueSplitChar + "{");
                     }
 
                 }
 
-                if (keyCount == 0)
+                for (int i = 1; i < fieldDatas.Length; i++)
                 {
-                    writer.WriteLine(_ArrayFlagCharRight);
+                    var data = fieldDatas[i];
+
+                    var type = data.fieldType;
+                    if (typeof(double) == type)
+                    {
+                        writer.WriteLine(WrapKey(data.fieldName) + _KeyValueSplitChar + data.dataList[rowIndex] + ",");
+                    }
+                    else if (typeof(string) == type)
+                    {
+                        writer.WriteLine(WrapKey(data.fieldName) + _KeyValueSplitChar + WrapString(data.dataList[rowIndex]) + ",");
+                    }
                 }
-                else
+
+
+                for (int i = 1; i <= keyCount; i++)
                 {
-                    writer.WriteLine("}");
+                    writer.Write("}");
                 }
 
-
-                writer.Flush();
-                writer.Close();
-                stream.Close();
-
+                if (rowIndex != fieldData.rowCount - 1)
+                {
+                    writer.WriteLine(",");
+                }
 
             }
+
+            if (keyCount == 0)
+            {
+                writer.WriteLine(_ArrayFlagCharRight);
+            }
+            else
+            {
+                writer.WriteLine("}");
+            }
+
+
+
+            AppendEnd(writer, end , keyCount);
+
+            writer.Flush();
+            writer.Close();
+            stream.Close();
+
         }
     }
 }

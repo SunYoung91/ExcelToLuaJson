@@ -69,14 +69,16 @@ namespace ExcelExport
                 {
                     var fileName = xlsFileList.GetItemText(xlsFileList.Items[i]);
 
-                    var exporter_c = new Export( fileName, export_path.Text + "\\client\\", "c", "json", textLog);
+                    var exporter_c = new Export( fileName, export_path.Text + "\\data\\client\\", "c", "json", textLog);
                     exporter_c.DoExport();
 
-                    var exporter_s = new Export( fileName, export_path.Text + "\\server\\", "s", "lua", textLog);
+                    var exporter_s = new Export( fileName, export_path.Text + "\\data\\server\\", "s", "lua", textLog);
                     exporter_s.DoExport();
 
                 }
             }
+
+            textLog.AppendText("======================================导出完成=======================================");
         }
 
         private void client_path_TextChanged(object sender, EventArgs e)
@@ -87,6 +89,30 @@ namespace ExcelExport
         private void FormMain_FormClosing(object sender, FormClosingEventArgs e)
         {
             SaveConfig();
+        }
+
+        private void btn_select_all_Click(object sender, EventArgs e)
+        {
+            for  (var i = 0; i < xlsFileList.Items.Count; i++)
+            {
+                xlsFileList.SetItemChecked(i, true);
+            }
+        }
+
+        private void btn_select_none_Click(object sender, EventArgs e)
+        {
+            for (var i = 0; i < xlsFileList.Items.Count; i++)
+            {
+                xlsFileList.SetItemChecked(i, false);
+            }
+        }
+
+        private void btn_exchange_select_Click(object sender, EventArgs e)
+        {
+            for (var i = 0; i < xlsFileList.Items.Count; i++)
+            {
+                xlsFileList.SetItemChecked(i, !xlsFileList.GetItemChecked(i));
+            }
         }
     }
 }

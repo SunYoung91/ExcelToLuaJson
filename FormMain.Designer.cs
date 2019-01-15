@@ -64,6 +64,7 @@
             this.btn_exchange_select.TabIndex = 4;
             this.btn_exchange_select.Text = "反选";
             this.btn_exchange_select.UseVisualStyleBackColor = true;
+            this.btn_exchange_select.Click += new System.EventHandler(this.btn_exchange_select_Click);
             // 
             // btn_select_none
             // 
@@ -73,6 +74,7 @@
             this.btn_select_none.TabIndex = 3;
             this.btn_select_none.Text = "全不选";
             this.btn_select_none.UseVisualStyleBackColor = true;
+            this.btn_select_none.Click += new System.EventHandler(this.btn_select_none_Click);
             // 
             // btn_select_all
             // 
@@ -82,6 +84,7 @@
             this.btn_select_all.TabIndex = 2;
             this.btn_select_all.Text = "全选";
             this.btn_select_all.UseVisualStyleBackColor = true;
+            this.btn_select_all.Click += new System.EventHandler(this.btn_select_all_Click);
             // 
             // label1
             // 
