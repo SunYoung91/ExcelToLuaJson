@@ -16,8 +16,12 @@ namespace ExcelExport
         private string _ArrayFlagCharLeft = "{"; //json 是[ ,lua 是 }
         private string _ArrayFlagCharRight = "}";
         private string _WrapKey = "";
-        private string _WrapString = ""; 
+        private string _WrapString = "";
+        private int _nExportType = 1;
 
+
+        private const int JSON = 1;
+        private const int LUA = 2;
 
 
         public Export(string excelFileName, string exportBasePath, string exportMode, string exportType, TextBox logBox)
@@ -55,6 +59,7 @@ namespace ExcelExport
                 _ArrayFlagCharRight = "}";
                 _WrapKey = "";
                 _WrapString = "\"";
+                _nExportType = LUA;
             } else if (type == "json")
             {
                 _KeyValueSplitChar = " : ";
@@ -62,6 +67,7 @@ namespace ExcelExport
                 _ArrayFlagCharRight = "]";
                 _WrapKey = "\"";
                 _WrapString = "\"";
+                _nExportType = JSON;
             }
             else
             {
@@ -299,15 +305,28 @@ namespace ExcelExport
                 for (int i = 1; i <= keyCount; i++)
                 {
                     var keyText = fieldDatas[i].dataList[rowIndex];
-                    if (typeof(string) == fieldDatas[i].fieldType)
+                    if (_nExportType == LUA)
                     {
-                        writer.Write(keyText + _KeyValueSplitChar + "{");
-                    }
-                    else
-                    {
-                        writer.Write(WrapKey(keyText) + _KeyValueSplitChar + "{");
-                    }
+                        if (typeof(string) == fieldDatas[i].fieldType)
+                        {
+                            writer.Write(keyText + _KeyValueSplitChar + "{");
+                        }
+                        else
+                        {
+                            writer.Write("[" + keyText + "]" + _KeyValueSplitChar + "{");
+                        }
 
+                    }
+                    else {
+                        if (typeof(string) == fieldDatas[i].fieldType)
+                        {
+                            writer.Write(keyText + _KeyValueSplitChar + "{");
+                        }
+                        else
+                        {
+                            writer.Write(WrapKey(keyText) + _KeyValueSplitChar + "{");
+                        }
+                    }
                     tabPreFix += "\t";
 
                 }
