@@ -2,6 +2,7 @@
 using ExcelDataReader;
 using System.IO;
 using System.Windows.Forms;
+using System.Collections.Generic;
 
 namespace ExcelExport
 {
@@ -23,6 +24,7 @@ namespace ExcelExport
         private const int JSON = 1;
         private const int LUA = 2;
 
+        private bool _isExportCode = false;
 
         public Export(string excelFileName, string exportBasePath, string exportMode, string exportType, TextBox logBox)
         {
@@ -85,7 +87,23 @@ namespace ExcelExport
             if (typeof(string) == fieldType)
             {
                 return _WrapString + str + _WrapString;
-            } else
+            } else if (typeof(Boolean) == fieldType)
+            {
+
+                if (str.Length <= 0)
+                {
+                    return "false";
+                }
+
+              if (str[0] == 'F' || str[0] == 'f')
+                {
+                    return "false";
+                } else
+                {
+                    return "true";
+                }
+            }
+            else
             {
                 return str;
             }
@@ -105,7 +123,7 @@ namespace ExcelExport
             var keyCount = 0;  //数组层级数量
             var exportHeader = ""; //导出文件头
             var exportEnd = "";//导出文件尾
-
+            _isExportCode = false;
             //建立所有会缓存的数组
             var fieldDatas = new FieldData[dataTable.FieldCount];
             for (int i = 0; i < dataTable.FieldCount; i++)
@@ -134,6 +152,10 @@ namespace ExcelExport
                                 break;
                             case "base":
                                 exportSchema = "base";
+                                break;
+                            case "codetiny":
+                                exportSchema = "tiny";
+                                _isExportCode = true;
                                 break;
                             default:
                                 return;
@@ -296,7 +318,8 @@ namespace ExcelExport
 
         private void ExportBase(FieldData[] fieldDatas, StreamWriter writer,int keyCount)
         {
-            var fieldData = fieldDatas[1];
+            var fieldData = fieldDatas[1]; //拿第一列数据的长度作为循环遍历次数 实际上这个有点问题 如果第一行长度不是最长的 后面的数据都会导不出来。 暂时先这样实现 
+
             for (int rowIndex = 0; rowIndex < fieldData.rowCount; rowIndex++)
             {
 
@@ -334,31 +357,105 @@ namespace ExcelExport
                 writer.Write("\r\n");
 
                 //导出数据部分
+                Dictionary<string, string> arrayMap = new Dictionary<string, string>();
+
+
+                bool skipDouhao = false;
                 for (int i = 1; i < fieldDatas.Length; i++)
                 {
                     var data = fieldDatas[i];
 
                     var type = data.fieldType;
-                        
-                    if (typeof(double) == type || typeof(string) == type)
+
+                    if (null == type)
+                    {
+                        continue;
+                    }
+
+                    if (typeof(double) == type || typeof(string) == type || typeof(Boolean) == type)
                     {
 
+                        //第一行不插入 换行逗号 如果是数组缓存 字段那么也跳过。
                         if (i != 1)
                         {
-                            writer.Write(",\r\n");
+                            if (!skipDouhao)    
+                            {
+                                writer.Write(",\r\n");
+                            }
+                           
                         }
 
-                        writer.Write(tabPreFix + WrapKey(data.fieldName) + _KeyValueSplitChar + WrapString(data.dataList[rowIndex], type));
 
+                        if (data.fieldName.StartsWith("_"))
+                        {
+                            var pos = data.fieldName.IndexOf(":");
+                            if (pos >= 0)
+                            {
+                                var arrayTableName = data.fieldName.Substring(1, pos - 1);
+                                var index = data.fieldName.Substring(pos + 1, data.fieldName.Length - pos - 1);
+                                string text = "";
+                                if (!arrayMap.TryGetValue(arrayTableName, out text))
+                                {
+                                    text = "{ ";
+                                }
+                                
+                                text = text + WrapKey(index) + _KeyValueSplitChar + WrapString(data.dataList[rowIndex], type) + " , ";
+                  
+                                arrayMap[arrayTableName] = text;
+
+                                skipDouhao = true; //走了这里说明这个表字段被临时缓存起来了 下一行啥也不用干。
+
+
+                            } else
+                            {
+                                throw new Exception("找到 _ 但是没有找到 : ,字段名:" + data.fieldName);
+                            }
+
+                        } else {
+
+                            skipDouhao = true;
+                            //对应类型如果是默认值全部跳过生成对应的字段 节省内存。
+                            if (data.dataList[rowIndex] == "")
+                            {                               
+                                continue;
+                            }
+
+                            if (typeof(Boolean) == type && data.dataList[rowIndex] == "False")
+                            {
+                                continue;
+                            }
+
+                            if(typeof(double) == type && data.dataList[rowIndex] == "0")
+                            {
+                                continue;
+                            }
+
+
+
+                            writer.Write(tabPreFix + WrapKey(data.fieldName) + _KeyValueSplitChar + WrapString(data.dataList[rowIndex], type));
+                            skipDouhao = false;//走了这里 下一行还是要正常插入逗号
+                        }
 
                     }
-            
-                    
+                    else
+                    {
+                        throw new Exception("未处理的字段类型:" + type.ToString() + "字段名:" + data.fieldName);
+                    }
+                          
                 }
+                List<string> keys = new List<string>(arrayMap.Keys);
+   
+                for (var i = 0; i < keys.Count; i ++)
+                {
+                    var value = arrayMap[keys[i]];
+                    value = value.Substring(0, value.Length - 2); //去掉尾部的两个字符 逗号 和 空格 用于排版的
+                    writer.Write(tabPreFix + WrapKey(keys[i]) + _KeyValueSplitChar + value + "}");
+                }
+
 
                 for (int i = 1; i <= keyCount; i++)
                 {
-                    writer.Write("}");
+                    writer.Write("\r\n}");
                 }
 
                 if (rowIndex != fieldData.rowCount - 1)
@@ -383,9 +480,22 @@ namespace ExcelExport
             var fieldData = fieldDatas[1];
             var targetPath = _ExportBastPath + "\\" + exportPath;
             CheckCreateDir(targetPath);
-               
 
-            var stream = new FileStream(_ExportBastPath +"\\"+  exportPath, FileMode.Create);
+            string fileName = _ExportBastPath + "\\" + exportPath;
+
+            if (_isExportCode)
+            {
+                if (_nExportType == JSON)
+                {
+                    fileName += ".js";
+                }
+                else
+                {
+                    fileName += ".lua";
+                }
+            }
+
+            var stream = new FileStream(fileName , FileMode.Create);
             var writer = new StreamWriter(stream);
 
             //如果是tiny 并且是导出为json 那么这里恒为1 否则会被判定为array.
@@ -407,6 +517,19 @@ namespace ExcelExport
 
 
             AppendEnd(writer, end , keyCount);
+
+            if (_isExportCode)
+            {
+                if (_nExportType == JSON)
+                {
+
+                } else
+                {
+                    var pos = head.IndexOf("=");
+                    string tableName = head.Substring(0, pos);
+                    writer.WriteLine("return " + tableName);
+                }
+            }
 
             writer.Flush();
             writer.Close();
