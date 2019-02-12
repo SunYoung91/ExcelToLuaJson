@@ -19,7 +19,7 @@ namespace ExcelExport
         private string _WrapKey = "";
         private string _WrapString = "";
         private int _nExportType = 1;
-
+        private List<String> _rowComent = new List<String>();
 
         private const int JSON = 1;
         private const int LUA = 2;
@@ -131,6 +131,8 @@ namespace ExcelExport
                 fieldDatas[i] = new FieldData();
             }
 
+
+            _rowComent.Clear();
             //迭代读取所有数据
             for (int rowIndex = 0; rowIndex < dataTable.RowCount; rowIndex++)
             {
@@ -144,6 +146,10 @@ namespace ExcelExport
                     if (rowIndex == 0 && columnIndex == 1)
                     {
                         //判定导出类型
+                        if (dataTable.GetFieldType(columnIndex) != typeof(string))
+                        {
+                            return;
+                        }
                         var text = dataTable.GetString(columnIndex);
                         switch (text)
                         {
@@ -200,7 +206,7 @@ namespace ExcelExport
                     }
 
                     //第8行才是数据列的真正开始
-                    if (rowIndex < 7)
+                        if (rowIndex < 7)
                     {
                         continue;
                     }
@@ -235,7 +241,24 @@ namespace ExcelExport
 
                     }
 
+                    //读取备注说明
+                    if (columnIndex == 0)
+                    {
+                        var data = dataTable.GetValue(columnIndex);
+                        if (data != null)
+                        {
+                            _rowComent.Add(data.ToString());
+         
+                        }
+                        else
+                        {
+                            _rowComent.Add("");
+                        }
+                    }
+
                 }
+
+
 
             }
 
@@ -303,16 +326,35 @@ namespace ExcelExport
             {
                 for (int rowIndex = 0; rowIndex < fieldDataKey.rowCount; rowIndex++)
                 {           
-                    writer.WriteLine("\t" + WrapKey(fieldDataKey.dataList[rowIndex]) + _KeyValueSplitChar + "\"" + fieldDataValue.dataList[rowIndex] + "\",");
+                    writer.Write("\t" + WrapKey(fieldDataKey.dataList[rowIndex]) + _KeyValueSplitChar + "\"" + fieldDataValue.dataList[rowIndex] + "\",");
+
+             
+                    if (_nExportType == LUA && _isExportCode && _rowComent[rowIndex] != "")
+                    {
+                        writer.Write("\t" + "--" + _rowComent[rowIndex]);
+                    } else
+                    {
+                        writer.Write("\r\n");
+                    }
                 }
             } else
             {
                 for (int rowIndex = 0; rowIndex < fieldDataKey.rowCount; rowIndex++)
                 {
-                    writer.WriteLine("\t" + WrapKey(fieldDataKey.dataList[rowIndex]) + _KeyValueSplitChar + fieldDataValue.dataList[rowIndex] + ",");
+                    writer.Write("\t" + WrapKey(fieldDataKey.dataList[rowIndex]) + _KeyValueSplitChar + fieldDataValue.dataList[rowIndex] + ",");
+
+
+                    if (_nExportType == LUA && _isExportCode && _rowComent[rowIndex] != "")
+                    {
+                        writer.Write("\t" + "--" + _rowComent[rowIndex] + "\r\n");
+                    }
+                    else
+                    {
+                        writer.Write("\r\n");
+                    }
                 }
             }
-
+          
 
         }
 
@@ -385,7 +427,6 @@ namespace ExcelExport
                            
                         }
 
-
                         if (data.fieldName.StartsWith("_"))
                         {
                             var pos = data.fieldName.IndexOf(":");
@@ -398,9 +439,9 @@ namespace ExcelExport
                                 {
                                     text = "{ ";
                                 }
-                                
-                                text = text + WrapKey(index) + _KeyValueSplitChar + WrapString(data.dataList[rowIndex], type) + " , ";
-                  
+
+                                text = text + "[" + WrapKey(index) + "]" + _KeyValueSplitChar + WrapString(data.dataList[rowIndex], type) + " , ";
+
                                 arrayMap[arrayTableName] = text;
 
                                 skipDouhao = true; //走了这里说明这个表字段被临时缓存起来了 下一行啥也不用干。
@@ -411,12 +452,48 @@ namespace ExcelExport
                                 throw new Exception("找到 _ 但是没有找到 : ,字段名:" + data.fieldName);
                             }
 
+                        } else if (data.fieldName.StartsWith("#A")) {
+                            var fieldName = data.fieldName.Substring(3, data.fieldName.Length - 3);
+                            var tb = data.dataList[rowIndex].Split('|');
+                            string exportStr = "";
+                            foreach(var str in tb)
+                            {
+                                var itemValue = str.Split(',');
+                                if (itemValue.Length >= 2 ){
+                                    string typeofItemIDStr = itemValue[0];
+                                    string countStr = itemValue[1];
+
+                                    int id = Convert.ToInt32(typeofItemIDStr);
+                                    int count = Convert.ToInt32(countStr);
+
+                                    if (_nExportType == LUA)
+                                    {
+                                        exportStr = exportStr + "{ id = " + id.ToString() + ",count=" + count.ToString() + "},";
+                                    } else
+                                    {
+                                        exportStr = exportStr + "{ \"id:\"" + id.ToString() + ",\"count\":" + count.ToString() + "},";
+                                    }
+                                   
+                                }
+                            }
+
+                            if (_nExportType == LUA)
+                            {
+                                exportStr = "{" + exportStr.Substring(0, exportStr.Length - 1) + "}";
+                            } else
+                            {
+                                exportStr = "[" + exportStr.Substring(0, exportStr.Length - 1) + "]";
+                            }
+
+                            writer.Write(tabPreFix + WrapKey(fieldName) + _KeyValueSplitChar + exportStr);
+                            skipDouhao = false;
+
                         } else {
 
                             skipDouhao = true;
                             //对应类型如果是默认值全部跳过生成对应的字段 节省内存。
                             if (data.dataList[rowIndex] == "")
-                            {                               
+                            {
                                 continue;
                             }
 
@@ -425,7 +502,7 @@ namespace ExcelExport
                                 continue;
                             }
 
-                            if(typeof(double) == type && data.dataList[rowIndex] == "0")
+                            if (typeof(double) == type && data.dataList[rowIndex] == "0")
                             {
                                 continue;
                             }
