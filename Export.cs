@@ -262,6 +262,21 @@ namespace ExcelExport
 
             }
 
+            //去掉空行
+            var FieldDataList = new List<FieldData>();
+            for (var i = 0; i < fieldDatas.Length; i++)
+            {
+                if ( i == 0 || fieldDatas[i].fieldName != null)
+                    FieldDataList.Add(fieldDatas[i]);
+            }
+
+            //复制回去
+            fieldDatas = new FieldData[FieldDataList.Count];
+            for (var i = 0; i < FieldDataList.Count; i++)
+            {
+                fieldDatas[i] = FieldDataList[i];
+            }
+
             ProcessArray(exportSchema, exportPath, keyCount, exportHeader, exportEnd, fieldDatas);
         }
 
@@ -410,6 +425,11 @@ namespace ExcelExport
                     var type = data.fieldType;
 
                     if (null == type)
+                    {
+                        continue;
+                    }
+
+                   if (!data.CanExportTo(_ExportMode))
                     {
                         continue;
                     }
