@@ -13,6 +13,7 @@ public class FieldData
         return exportPlatform.IndexOf(plat) >= 0;
 
     }
+
 	public FieldData()
 	{
 

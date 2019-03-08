@@ -460,6 +460,13 @@ namespace ExcelExport
                                     text = "{ ";
                                 }
 
+                                if (data.dataList[rowIndex] == "")
+                                {
+
+                                    skipDouhao = true;
+                                    continue;
+                                }
+
                                 text = text + "[" + WrapKey(index) + "]" + _KeyValueSplitChar + WrapString(data.dataList[rowIndex], type) + " , ";
 
                                 arrayMap[arrayTableName] = text;
@@ -511,24 +518,21 @@ namespace ExcelExport
                         } else {
 
                             skipDouhao = true;
-                            //对应类型如果是默认值全部跳过生成对应的字段 节省内存。
+
                             if (data.dataList[rowIndex] == "")
                             {
-                                continue;
+                                if (typeof(Boolean) == type)
+                                {
+                                    data.dataList[rowIndex] = "False";
+
+                                }
+                                else if (typeof(double) == type)
+                                {
+                                    data.dataList[rowIndex] = "0";
+                                }
+
                             }
-
-                            if (typeof(Boolean) == type && data.dataList[rowIndex] == "False")
-                            {
-                                continue;
-                            }
-
-                            if (typeof(double) == type && data.dataList[rowIndex] == "0")
-                            {
-                                continue;
-                            }
-
-
-
+                            
                             writer.Write(tabPreFix + WrapKey(data.fieldName) + _KeyValueSplitChar + WrapString(data.dataList[rowIndex], type));
                             skipDouhao = false;//走了这里 下一行还是要正常插入逗号
                         }
