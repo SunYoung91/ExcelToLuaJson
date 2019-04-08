@@ -340,8 +340,15 @@ namespace ExcelExport
             if (typeof(string) == fieldDataValue.fieldType)
             {
                 for (int rowIndex = 0; rowIndex < fieldDataKey.rowCount; rowIndex++)
-                {           
-                    writer.Write("\t" + WrapKey(fieldDataKey.dataList[rowIndex]) + _KeyValueSplitChar + "\"" + fieldDataValue.dataList[rowIndex] + "\",");
+                {
+                    if (rowIndex != fieldDataKey.rowCount - 1)
+                    {
+                        writer.Write("\t" + WrapKey(fieldDataKey.dataList[rowIndex]) + _KeyValueSplitChar + "\"" + fieldDataValue.dataList[rowIndex] + "\",");
+                    } else
+                    {
+                        writer.Write("\t" + WrapKey(fieldDataKey.dataList[rowIndex]) + _KeyValueSplitChar + "\"" + fieldDataValue.dataList[rowIndex] + "\"");
+                    }
+                   
 
              
                     if (_nExportType == LUA && _isExportCode && _rowComent[rowIndex] != "")
@@ -356,7 +363,18 @@ namespace ExcelExport
             {
                 for (int rowIndex = 0; rowIndex < fieldDataKey.rowCount; rowIndex++)
                 {
-                    writer.Write("\t" + WrapKey(fieldDataKey.dataList[rowIndex]) + _KeyValueSplitChar + fieldDataValue.dataList[rowIndex] + ",");
+
+
+                    if (rowIndex != fieldDataKey.rowCount - 1)
+                    {
+                        writer.Write("\t" + WrapKey(fieldDataKey.dataList[rowIndex]) + _KeyValueSplitChar + fieldDataValue.dataList[rowIndex] + ",");
+                    }
+                    else
+                    {
+                        writer.Write("\t" + WrapKey(fieldDataKey.dataList[rowIndex]) + _KeyValueSplitChar + fieldDataValue.dataList[rowIndex]);
+                    }
+
+                    
 
 
                     if (_nExportType == LUA && _isExportCode && _rowComent[rowIndex] != "")
@@ -377,6 +395,7 @@ namespace ExcelExport
         {
             var fieldData = fieldDatas[1]; //拿第一列数据的长度作为循环遍历次数 实际上这个有点问题 如果第一行长度不是最长的 后面的数据都会导不出来。 暂时先这样实现 
 
+            
             for (int rowIndex = 0; rowIndex < fieldData.rowCount; rowIndex++)
             {
 
@@ -421,7 +440,6 @@ namespace ExcelExport
                 for (int i = 1; i < fieldDatas.Length; i++)
                 {
                     var data = fieldDatas[i];
-
                     var type = data.fieldType;
 
                     if (null == type)
@@ -458,6 +476,7 @@ namespace ExcelExport
                                 if (!arrayMap.TryGetValue(arrayTableName, out text))
                                 {
                                     text = "{ ";
+                                    arrayMap[arrayTableName] = text;
                                 }
 
                                 if (data.dataList[rowIndex] == "")
@@ -467,12 +486,17 @@ namespace ExcelExport
                                     continue;
                                 }
 
-                                text = text + "[" + WrapKey(index) + "]" + _KeyValueSplitChar + WrapString(data.dataList[rowIndex], type) + " , ";
-
+                                if (_nExportType == JSON)
+                                {
+                                    text = text +  WrapKey(index)  + _KeyValueSplitChar + WrapString(data.dataList[rowIndex], type) + " , ";
+                                } else
+                                {
+                                    text = text + "[" + WrapKey(index) + "]" + _KeyValueSplitChar + WrapString(data.dataList[rowIndex], type) + " , ";
+                                }
+                                
                                 arrayMap[arrayTableName] = text;
 
                                 skipDouhao = true; //走了这里说明这个表字段被临时缓存起来了 下一行啥也不用干。
-
 
                             } else
                             {
@@ -498,7 +522,7 @@ namespace ExcelExport
                                         exportStr = exportStr + "{ id = " + id.ToString() + ",count=" + count.ToString() + "},";
                                     } else
                                     {
-                                        exportStr = exportStr + "{ \"id:\"" + id.ToString() + ",\"count\":" + count.ToString() + "},";
+                                        exportStr = exportStr + "{ \"id\":" + id.ToString() + ",\"count\":" + count.ToString() + "},";
                                     }
                                    
                                 }
@@ -545,23 +569,25 @@ namespace ExcelExport
                           
                 }
                 List<string> keys = new List<string>(arrayMap.Keys);
-   
+
                 for (var i = 0; i < keys.Count; i ++)
                 {
                     var value = arrayMap[keys[i]];
+           
                     value = value.Substring(0, value.Length - 2); //去掉尾部的两个字符 逗号 和 空格 用于排版的
-                    writer.Write(tabPreFix + WrapKey(keys[i]) + _KeyValueSplitChar + value + "}");
+                    if (value == "")
+                        value = "{";
+                    writer.Write(tabPreFix + WrapKey(keys[i]) + _KeyValueSplitChar + value + "}");              
                 }
-
 
                 for (int i = 1; i <= keyCount; i++)
                 {
                     writer.Write("\r\n}");
                 }
 
-                if (rowIndex != fieldData.rowCount - 1)
+                if (rowIndex < fieldData.rowCount - 1)
                 {
-                    writer.WriteLine(",");
+                        writer.WriteLine(",");
                 }
 
             }
