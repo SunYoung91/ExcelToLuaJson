@@ -94,7 +94,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ExcelSheetData.cs" />
+    <Compile Include="ExcelTableData.cs" />
     <Compile Include="Export.cs" />
+    <Compile Include="Exporter\ExporterBase.cs" />
+    <Compile Include="Exporter\ExporterJson.cs" />
+    <Compile Include="Exporter\ExporterLua.cs" />
     <Compile Include="FieldData.cs" />
     <Compile Include="FormMain.cs">
       <SubType>Form</SubType>
@@ -102,6 +107,7 @@
     <Compile Include="FormMain.Designer.cs">
       <DependentUpon>FormMain.cs</DependentUpon>
     </Compile>
+    <Compile Include="LogUtils.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

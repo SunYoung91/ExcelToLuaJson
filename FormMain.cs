@@ -22,7 +22,7 @@ namespace ExcelExport
         private void FormMain_Load(object sender, EventArgs e)
         {
             _currentDirectory = Directory.GetCurrentDirectory();
-
+            LogUtils.instance.SetTextBox(textLog);
             LoadConfig();
             RefreshXls();
 
@@ -67,18 +67,24 @@ namespace ExcelExport
             {
                 if (xlsFileList.GetItemChecked(i))
                 {
+                    
                     var fileName = xlsFileList.GetItemText(xlsFileList.Items[i]);
+                    LogUtils.instance.AddLog("读取Excel :" + fileName);
+                    var exporter = new Export( fileName);
+                    LogUtils.instance.AddLog("读取完成 : " + fileName);
 
-                    var exporter_c = new Export( fileName, export_path.Text + "\\data\\client\\", "c", "json", textLog);
-                    exporter_c.DoExport();
+                    LogUtils.instance.AddLog("开始导出到JSON");
+                    exporter.DoExport(export_path.Text + "\\data\\client\\", "c", "json");
 
-                    var exporter_s = new Export( fileName, export_path.Text + "\\data\\server\\", "s", "lua", textLog);
-                    exporter_s.DoExport();
+                    LogUtils.instance.AddLog("开始导出到LUA");
+                    exporter.DoExport(export_path.Text + "\\data\\server\\", "s", "lua");
+
+                    LogUtils.instance.AddLog("完成处理Excel :" + fileName);
 
                 }
             }
 
-            textLog.AppendText("======================================导出完成=======================================");
+            LogUtils.instance.AddLog("=======导出完成=====");
         }
 
         private void client_path_TextChanged(object sender, EventArgs e)
