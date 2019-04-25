@@ -52,21 +52,46 @@ namespace ExcelExport.Exporter
                 {
                     fieldData = data.filedList[i];           
                     //数组列表
-                    if (fieldData.IsArrayField())
+                    if (fieldData.objType == FieldObjectType.ARRAY)
                     {
-                        string str = "    " + fieldData.fieldName + " = {";
-                        for (var arrayIndex = 0; arrayIndex < fieldData.arrayList.Count; arrayIndex++)
+                        string str = "    " + fieldData.fieldName + "={";
+                        for (var arrayIndex = 0; arrayIndex < fieldData.ObjListCount(); arrayIndex++)
                         {
-                            AraryFieldData afd = fieldData.arrayList[arrayIndex];
+                            AraryFieldData afd = fieldData.GetArrayFieldByIndex(arrayIndex);
                             str = str + string.Format("[{0}]={1}", afd.keyName, afd.values[rowIndex]);
 
-                            if (arrayIndex != fieldData.arrayList.Count - 1)
+                            if (arrayIndex != fieldData.ObjListCount() - 1)
                             {
-                                str = str + "}";
+                                str = str + ",";
                             }
                         }
 
+
+                        writer.Write(str + "}");
+
+                    } else if (fieldData.objType == FieldObjectType.ITEM)
+                    {
+                        string str = "   " + fieldData.fieldName +  " = {";
+                        
+                        List<ItemData> itemList = fieldData.GetItemDataListByIndex(rowIndex);
+
+                        for (var itemIndex = 0; itemIndex < itemList.Count; itemIndex++)
+                        {
+                            ItemData item = itemList[itemIndex];
+
+                            str = str + "{" + string.Format("type={0},id={1},count={2}", item.type, item.id, item.count) + "}";
+
+                            if (itemIndex != itemList.Count - 1)
+                            {
+                                str = str + ",";
+                            }
+                        }
+
+         
+                        str += "}";
+
                         writer.Write(str);
+
                     }
                     else
                     {

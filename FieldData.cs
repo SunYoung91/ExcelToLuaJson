@@ -7,33 +7,91 @@ public class AraryFieldData
     public List<string> values;
 }
 
+public class ItemData
+{
+    public int type;
+    public int id;
+    public int count;
+}
+
+public enum FieldObjectType
+{
+    BOOLEAN = 1,
+    STRING = 2,
+    NUMBER = 3,
+    ITEM = 4,
+    ARRAY = 5
+}
+
 public class FieldData
 {
     public string exportPlatform;
     public string fieldName;
     public Type fieldType;
     public List<string> dataList = new List<string>(); //普通字段
-    public List<AraryFieldData> arrayList; //整理后的数组字段
+
+    public FieldObjectType objType;
+    public List<Object> objList = new List<Object>(); //对象列表根据 dataList 序列化后的字段
     
     public void AddArrayField(string keyName, FieldData data)
     {
-        if (arrayList == null)
+        if (objList == null)
         {
-            arrayList = new List<AraryFieldData>();
+            objList = new List<Object>();
         }
 
         AraryFieldData adt = new AraryFieldData();
         adt.keyName = keyName;
         adt.values = data.dataList;
 
-        arrayList.Add(adt);
+        objList.Add(adt);
     }
 
-    public bool IsArrayField()
+    public int ObjListCount()
     {
-        return arrayList != null;
+        return objList.Count;
     }
 
+    public AraryFieldData GetArrayFieldByIndex(int index)
+    {
+        if (objType != FieldObjectType.ARRAY)
+        {
+            return null;
+        }
+
+       if  (index >= 0 && index < objList.Count)
+        {
+            return objList[index] as AraryFieldData;
+        }
+
+        return null;
+    }
+
+    public List<ItemData> GetItemDataListByIndex(int index)
+    {
+        if (objType != FieldObjectType.ITEM)
+        {
+            return null;
+        }
+
+        if (index >= 0 && index < objList.Count)
+        {
+            return objList[index] as List<ItemData>;
+        }
+
+        return null;
+    }
+
+    public void AddItemList(List<ItemData> itemList)
+    {
+        if (objList == null)
+        {
+            objList = new List<Object>();
+        }
+
+        objList.Add(itemList);
+
+    }
 
     public void Add(string str)
     {

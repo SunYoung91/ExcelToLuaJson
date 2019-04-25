@@ -77,7 +77,12 @@ public class ExcelSheetData
         InitExportBaseInfo();
 
         DeleteNoneDateCell();//删掉非数据行的字段
+
+        CheckSetDefalutValue(); //给与为空的字段默认值
+
         MergeArrayField();
+
+        DoItemFields();
     }
 
     private string GetCellString(int rowIndex, int columnIndex)
@@ -163,6 +168,7 @@ public class ExcelSheetData
                     {
                         arrayData = new FieldData();
                         arrayData.fieldName = arrayTableName;
+                        arrayData.objType = FieldObjectType.ARRAY;
                         arrayField.Add(arrayTableName, arrayData);
                     }
                     arrayData.AddArrayField(index, field);
@@ -187,6 +193,80 @@ public class ExcelSheetData
         {
             FieldData field = filedList[i];
             field.dataList.RemoveRange(0, 7);     
+        }
+    }
+
+    private void CheckSetDefalutValue()
+    {
+
+        for (var i = 0; i < filedList.Count; i++)
+        {
+            FieldData field = filedList[i];
+            
+            for (var  j = 0; j < field.dataList.Count; j++){ 
+                if (field.dataList[j] == "")
+                {
+                    if (field.fieldType == typeof(double))
+                    {
+                        field.dataList[j] = "0";
+                    } else if(field.fieldType == typeof(Boolean))
+                    {
+                        field.dataList[j] = "false";
+                    }
+                }
+            }
+        }
+    }
+
+    private void DoItemFields()
+    {
+        for (var i = 0; i < filedList.Count; i++)
+        {
+            FieldData field = filedList[i];
+            if (field.fieldName.StartsWith("#A"))
+            {
+                var pos = field.fieldName.IndexOf("_");
+                if (pos >= 0)
+                {
+                    var realFieldName = field.fieldName.Substring(pos + 1, field.fieldName.Length - pos - 1);
+                    field.fieldName = realFieldName;
+                    field.objType = FieldObjectType.ITEM;
+
+                    for (var j = 0; j < field.dataList.Count; j++)
+                    {
+                        var temp = field.dataList[j];
+                        var itemStrArray = temp.Split('|');
+                        List<ItemData> itemData = new List<ItemData>();
+                        for (var itemCount = 0; itemCount < itemStrArray.Length ; itemCount++)
+                        {                               
+                            var strArray = itemStrArray[itemCount].Split(',');
+                            if (strArray.Length >= 2)
+                            {
+                                int type = 0;
+                                int id = int.Parse(strArray[0]);
+                                int count = int.Parse(strArray[1]);
+
+                                if (id < 0)
+                                {
+                                    id = 0;                               
+                                    type = Math.Abs(id);
+                                } else
+                                {
+                                    type = 100; //约定100是道具 类型 
+                                }
+
+                                ItemData item = new ItemData();
+                                item.type = type;
+                                item.id = id;
+                                item.count = count;
+                                itemData.Add(item);
+                            }
+                        }
+
+                        field.AddItemList(itemData);
+                    }
+                }
+            }
         }
     }
 }
