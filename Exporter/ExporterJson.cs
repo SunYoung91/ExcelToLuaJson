@@ -24,21 +24,61 @@ namespace ExcelExport.Exporter
         {
             var fieldDataKey = data.filedList[0];
             var fieldDataValue = data.filedList[1];
+            FieldData typeField = null;
 
-            writer.WriteLine("{");
+            if (data.filedList.Count > 2)
+            {
+                typeField = data.filedList[2];
+            }
 
             for (var rowCount = 0; rowCount < fieldDataKey.dataList.Count; rowCount++)
             {
-                string str = "";
-                str = string.Format("{0}:\"{1}\"",fieldDataKey.dataList[rowCount], fieldDataValue.dataList[rowCount]);
 
-                if (rowCount != fieldDataKey.dataList.Count)
+                var ttype = "";
+                if ((typeField != null) && (typeField.dataList[rowCount] != ""))
+                {
+                    ttype = typeField.dataList[rowCount];
+                }
+
+
+                string str = "";
+                switch (ttype)
+                {
+                    case "int":
+                    {
+                            str = string.Format("\"{0}\":{1}", fieldDataKey.dataList[rowCount], fieldDataValue.dataList[rowCount]);
+                    }
+                        break;
+                    case "int_array":
+                    {
+                            var values = fieldDataValue.dataList[rowCount].Split(',');
+                            var arrayValues = "[";
+                            foreach ( var v in values)
+                            {
+                                arrayValues += v + ",";
+                            }
+
+                            arrayValues = arrayValues.Substring(0, arrayValues.Length - 1) + "]";       
+                            
+                            str = string.Format("\"{0}\":{1}", fieldDataKey.dataList[rowCount], arrayValues);
+                        }
+                    break;
+                    default: //默认当做string 处理
+                    {
+                            str = string.Format("\"{0}\":{1}", fieldDataKey.dataList[rowCount], fieldDataValue.dataList[rowCount]);
+                    }
+                        break;
+
+                }
+                      
+                if (rowCount != fieldDataKey.dataList.Count - 1)
                 {
                     str += ",";
                 }
+
+                writer.WriteLine(str);
             }
 
-            writer.WriteLine("}");
         }
 
         protected override void ExportBase(ExcelSheetData data, StreamWriter writer)
@@ -108,6 +148,12 @@ namespace ExcelExport.Exporter
                         if (fieldData.fieldType == typeof(string))
                         {
                             string str = string.Format(" \"{0}\":\"{1}\"", fieldData.fieldName, fieldData.dataList[rowIndex]);
+                            writer.Write(str);
+                        }
+                        else if (fieldData.fieldType == typeof(Boolean))
+                        {
+                            //读取出来的true 和 false 都是大写开头的这里要单独处理一下
+                            string str = string.Format(" \"{0}\":{1}", fieldData.fieldName, fieldData.dataList[rowIndex].ToLower());
                             writer.Write(str);
                         }
                         else
