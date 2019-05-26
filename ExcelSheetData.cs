@@ -17,6 +17,8 @@ public class ExcelSheetData
     public int keyCount;
     public bool isNeedExprot;
 
+    public static int DATA_START_ROW_INDEX = 8; //数据起始行
+
     public ExcelSheetData()
     {
 
@@ -43,7 +45,7 @@ public class ExcelSheetData
                 FieldData fieldData = filedList[columnIndex];
 
                 //根据有效数据的第一行决定本行的实际类型 也就是第一行数据一定不能为空
-                if (rowIndex == 7)
+                if (rowIndex == DATA_START_ROW_INDEX)
                 {
                     var type = dataTable.GetFieldType(columnIndex);
                     if (type != null)
@@ -83,6 +85,8 @@ public class ExcelSheetData
         MergeArrayField();
 
         DoItemFields();
+
+        DoIntArrayFields();
     }
 
     private string GetCellString(int rowIndex, int columnIndex)
@@ -128,6 +132,12 @@ public class ExcelSheetData
         for (var i = 0; i < filedList.Count; i++)
         {
             filedList[i].fieldName = filedList[i].GetString(6);
+        }
+
+        //获取列字段的类型
+        for (var i = 0; i < filedList.Count; i++)
+        {
+            filedList[i].fieldEnhanceType = filedList[i].GetString(7);
         }
 
         //过滤掉 filedName为 空的字段
@@ -192,7 +202,7 @@ public class ExcelSheetData
         for (var i = 0; i < filedList.Count; i++)
         {
             FieldData field = filedList[i];
-            field.dataList.RemoveRange(0, 7);     
+            field.dataList.RemoveRange(0, DATA_START_ROW_INDEX);     
         }
     }
 
@@ -237,8 +247,8 @@ public class ExcelSheetData
                         var temp = field.dataList[j];
                         var itemStrArray = temp.Split('|');
                         List<ItemData> itemData = new List<ItemData>();
-                        for (var itemCount = 0; itemCount < itemStrArray.Length ; itemCount++)
-                        {                               
+                        for (var itemCount = 0; itemCount < itemStrArray.Length; itemCount++)
+                        {
                             var strArray = itemStrArray[itemCount].Split(',');
                             if (strArray.Length >= 2)
                             {
@@ -248,9 +258,10 @@ public class ExcelSheetData
 
                                 if (id < 0)
                                 {
-                                    id = 0;                               
+                                    id = 0;
                                     type = Math.Abs(id);
-                                } else
+                                }
+                                else
                                 {
                                     type = 100; //约定100是道具 类型 
                                 }
@@ -268,5 +279,31 @@ public class ExcelSheetData
                 }
             }
         }
+    }
+
+    private void DoIntArrayFields()
+    {
+        for (var i = 0; i < filedList.Count; i++)
+        {
+            FieldData field = filedList[i];
+            if (field.fieldEnhanceType == "int_array")
+            {
+               field.objType = FieldObjectType.INT_ARRAY;
+               field.objList = new List<object>();
+               for (var j =  0; j < field.dataList.Count; j++)
+               {
+                   if (field.dataList[j] == "") continue;
+                   List<int> data = new List<int>();
+                   string[] strArray = field.dataList[j].Split(',');
+                   foreach(var str in strArray)
+                   {
+                        int value = Convert.ToInt32(str);
+                        data.Add(value);
+                   }
+                    field.objList.Add(data);
+               }                    
+            }
+        }
+
     }
 }

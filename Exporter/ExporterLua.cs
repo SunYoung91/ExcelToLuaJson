@@ -89,7 +89,7 @@ namespace ExcelExport.Exporter
 
                 for (var i = 0; i < data.filedList.Count; i++)
                 {
-                    fieldData = data.filedList[i];           
+                    fieldData = data.filedList[i];
                     //数组列表
                     if (fieldData.objType == FieldObjectType.ARRAY)
                     {
@@ -110,8 +110,8 @@ namespace ExcelExport.Exporter
 
                     } else if (fieldData.objType == FieldObjectType.ITEM)
                     {
-                        string str = "   " + fieldData.fieldName +  " = {";
-                        
+                        string str = "   " + fieldData.fieldName + " = {";
+
                         List<ItemData> itemList = fieldData.GetItemDataListByIndex(rowIndex);
 
                         for (var itemIndex = 0; itemIndex < itemList.Count; itemIndex++)
@@ -126,11 +126,30 @@ namespace ExcelExport.Exporter
                             }
                         }
 
-         
+
                         str += "}";
 
                         writer.Write(str);
+                    }
+                    else if (fieldData.objType == FieldObjectType.INT_ARRAY)
+                    {
+                        writer.Write("    " + fieldData.fieldName + " = {");
 
+                        if (rowIndex < fieldData.objList.Count)
+                        {
+                            List<int> intList = fieldData.objList[rowIndex] as List<int>;
+                            for (var dataIndex = 0; dataIndex < intList.Count; dataIndex++)
+                            {
+                                writer.Write(intList[dataIndex].ToString());
+
+                                if (dataIndex != intList.Count - 1)
+                                {
+                                    writer.Write(",");
+                                }
+                            }
+                        }
+
+                        writer.Write("}");
                     }
                     else
                     {

@@ -20,7 +20,8 @@ public enum FieldObjectType
     STRING = 2,
     NUMBER = 3,
     ITEM = 4,
-    ARRAY = 5
+    ARRAY = 5,
+    INT_ARRAY = 6
 }
 
 public class FieldData
@@ -30,6 +31,7 @@ public class FieldData
     public Type fieldType;
     public List<string> dataList = new List<string>(); //普通字段
 
+    public string fieldEnhanceType; //用额外一列来表示额外数据类型 方便对一些特定的类型进行特殊处理
     public FieldObjectType objType;
     public List<Object> objList = new List<Object>(); //对象列表根据 dataList 序列化后的字段
     
@@ -128,7 +130,7 @@ public class FieldData
 
     public void CheckRealRowCount()
     {
-        for (var i = dataList.Count - 1; i >= 7 ; i--)
+        for (var i = dataList.Count - 1; i >= ExcelSheetData.DATA_START_ROW_INDEX; i--)
         {
             if (dataList[i] == "")
             {
