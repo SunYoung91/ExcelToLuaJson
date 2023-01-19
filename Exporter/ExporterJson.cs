@@ -30,7 +30,7 @@ namespace ExcelExport.Exporter
             for (var rowCount = 0; rowCount < fieldDataKey.dataList.Count; rowCount++)
             {
                 string str = "";
-                str = string.Format("{0}:\"{1}\"",fieldDataKey.dataList[rowCount], fieldDataValue.dataList[rowCount]);
+                str = string.Format("{0}:\"{1}\"", fieldDataKey.dataList[rowCount], fieldDataValue.dataList[rowCount]);
 
                 if (rowCount != fieldDataKey.dataList.Count)
                 {
@@ -45,8 +45,6 @@ namespace ExcelExport.Exporter
         {
             FieldData fieldData = null;
             var rowCount = data.filedList[0].RowCount;
-
-
             for (var rowIndex = 0; rowIndex < rowCount; rowIndex++)
             {
 
@@ -57,11 +55,17 @@ namespace ExcelExport.Exporter
                     key += string.Format("\"{0}\" : ", data.filedList[i].dataList[rowIndex]) + "{";
                 }
 
-                writer.WriteLine(key);
+                string appendStr = (key + "\n");
 
                 for (var i = 0; i < data.filedList.Count; i++)
                 {
                     fieldData = data.filedList[i];
+
+                    if (!fieldData.CanExportTo("c"))
+                    {
+                        continue;
+                    }
+
                     //数组列表
                     if (fieldData.IsArrayField())
                     {
@@ -79,7 +83,7 @@ namespace ExcelExport.Exporter
 
                         str += "]";
 
-                        writer.Write(str);
+                        appendStr += str;
                     }
                     else
                     {
@@ -87,26 +91,21 @@ namespace ExcelExport.Exporter
                         if (fieldData.fieldType == typeof(string))
                         {
                             string str = string.Format(" \"{0}\":\"{1}\"", fieldData.fieldName, fieldData.dataList[rowIndex]);
-                            writer.Write(str);
+                            appendStr += str;
                         }
                         else
                         {
                             string str = string.Format(" \"{0}\":{1}", fieldData.fieldName, fieldData.dataList[rowIndex]);
-                            writer.Write(str);
+                            appendStr += str;
                         }
 
                     }
 
-                    //最后一行不给逗号分隔
-                    if (i != data.filedList.Count - 1)
-                    {
-                        writer.WriteLine(",");
-                    }
-                    else
-                    {
-                        writer.WriteLine(" ");
-                    }
+                    appendStr += ",\n";
                 }
+
+                appendStr = appendStr.Substring(0, appendStr.Length - 2);
+                writer.WriteLine(appendStr);
 
                 if (rowIndex == rowCount - 1)
                 {
