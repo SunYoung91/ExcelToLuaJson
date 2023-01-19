@@ -12,12 +12,12 @@ namespace ExcelExport.Exporter
 
         protected override void AddHeader(ExcelSheetData data, StreamWriter writer)
         {
-            writer.WriteLine("{");
+            writer.WriteLine("[");
         }
 
         protected override void AddEnd(ExcelSheetData data, StreamWriter writer)
         {
-            writer.WriteLine("}");
+            writer.WriteLine("]");
         }
 
         protected override void ExportTiny(ExcelSheetData data, StreamWriter writer)
@@ -52,7 +52,8 @@ namespace ExcelExport.Exporter
                 string key = "";
                 for (var i = 0; i < data.keyCount; i++)
                 {
-                    key += string.Format("\"{0}\" : ", data.filedList[i].dataList[rowIndex]) + "{";
+                    //key += string.Format("\"{0}\" : ", data.filedList[i].dataList[rowIndex]) + "{";
+                    key += "{";
                 }
 
                 string appendStr = (key + "\n");
