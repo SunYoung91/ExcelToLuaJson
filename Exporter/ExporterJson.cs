@@ -30,14 +30,22 @@ namespace ExcelExport.Exporter
             for (var rowCount = 0; rowCount < fieldDataKey.dataList.Count; rowCount++)
             {
                 string str = "";
-                str = string.Format("{0}:\"{1}\"", fieldDataKey.dataList[rowCount], fieldDataValue.dataList[rowCount]);
+                int intRes = -1;
+                if (int.TryParse(fieldDataValue.dataList[rowCount], out intRes))
+                {
+                    str = string.Format("\"{0}\":{1}", fieldDataKey.dataList[rowCount], intRes);
+                }
+                else
+                {
+                    str = string.Format("\"{0}\":\"{1}\"", fieldDataKey.dataList[rowCount], fieldDataValue.dataList[rowCount]);
+                }
 
-                if (rowCount != fieldDataKey.dataList.Count)
+                if (rowCount != fieldDataKey.dataList.Count - 1)
                 {
                     str += ",";
                 }
+                writer.WriteLine(str);
             }
-
             writer.WriteLine("}");
         }
 

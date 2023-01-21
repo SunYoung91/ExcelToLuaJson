@@ -52,16 +52,17 @@ namespace ExcelExport.Exporter
             var stream = new FileStream(fileName, FileMode.Create);
             var writer = new StreamWriter(stream);
 
-            AddHeader(data, writer);
             if (data.exportSchema == "base")
             {
+                AddHeader(data, writer);
                 ExportBase(data, writer);
-            } else if(data.exportSchema == "tiny")
+                AddEnd(data, writer);
+            }
+            else if(data.exportSchema == "tiny")
             {
                 ExportTiny(data, writer);
             }
 
-            AddEnd(data, writer);
             writer.Close();
             stream.Close();
 
