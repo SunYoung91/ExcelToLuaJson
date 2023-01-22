@@ -31,9 +31,14 @@ namespace ExcelExport.Exporter
             {
                 string str = "";
                 int intRes = -1;
+                double doubleRes = 0;
                 if (int.TryParse(fieldDataValue.dataList[rowCount], out intRes))
                 {
                     str = string.Format("\"{0}\":{1}", fieldDataKey.dataList[rowCount], intRes);
+                }
+                else if (double.TryParse(fieldDataValue.dataList[rowCount], out doubleRes))
+                {
+                    str = string.Format("\"{0}\":{1}", fieldDataKey.dataList[rowCount], doubleRes);
                 }
                 else
                 {
