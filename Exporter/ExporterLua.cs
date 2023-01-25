@@ -9,6 +9,10 @@ namespace ExcelExport.Exporter
 {
     public class ExporterLua : ExporterBase
     {
+        public ExporterLua(string exportMode) : base(exportMode)
+        {
+        }
+
         protected override void ExportTiny(ExcelSheetData data, StreamWriter writer)
         {
             var fieldDataKey = data.filedList[0];
@@ -30,7 +34,7 @@ namespace ExcelExport.Exporter
             writer.WriteLine("}");
         }
 
-        protected override void ExportBase(ExcelSheetData data, StreamWriter writer)
+        protected override void ExportBase(ExcelSheetData data, StreamWriter writer, string exportMode)
         {
             FieldData fieldData = null;
             var rowCount = data.filedList[0].RowCount;

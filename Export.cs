@@ -12,27 +12,27 @@ namespace ExcelExport
         private string _ExportExcelFileName = "";
         private ExcelTableData excelTable;
         public Export(string excelFileName)
-        {    
+        {
             _ExportExcelFileName = excelFileName;
             excelTable = new ExcelTableData();
             excelTable.LoadFromFile(excelFileName);
         }
 
-        public void DoExport(string exportBasePath,string exportMode,string exportType)
+        public void DoExport(string exportBasePath, string exportMode, string exportType)
         {
             ExporterBase exporter = null;
             switch (exportType)
             {
                 case "lua":
                     {
-                        exporter = new ExporterLua();
+                        exporter = new ExporterLua(exportMode);
                     }
                     break;
                 case "json":
                     {
-                        exporter = new ExporterJson();
+                        exporter = new ExporterJson(exportMode);
                     }
-                   break;
+                    break;
             }
 
 
@@ -44,6 +44,6 @@ namespace ExcelExport
 
         }
 
-        
+
     }
 }

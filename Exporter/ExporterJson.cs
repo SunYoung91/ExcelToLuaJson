@@ -9,7 +9,9 @@ namespace ExcelExport.Exporter
 {
     public class ExporterJson : ExporterBase
     {
-
+        public ExporterJson(string exportMode) : base(exportMode)
+        {
+        }
         protected override void AddHeader(ExcelSheetData data, StreamWriter writer)
         {
             writer.WriteLine("[");
@@ -32,17 +34,25 @@ namespace ExcelExport.Exporter
                 string str = "";
                 int intRes = -1;
                 double doubleRes = 0;
-                if (int.TryParse(fieldDataValue.dataList[rowCount], out intRes))
+                string value = fieldDataValue.dataList[rowCount];
+                if (int.TryParse(value, out intRes))
                 {
                     str = string.Format("\"{0}\":{1}", fieldDataKey.dataList[rowCount], intRes);
                 }
-                else if (double.TryParse(fieldDataValue.dataList[rowCount], out doubleRes))
+                else if (double.TryParse(value, out doubleRes))
                 {
                     str = string.Format("\"{0}\":{1}", fieldDataKey.dataList[rowCount], doubleRes);
                 }
                 else
                 {
-                    str = string.Format("\"{0}\":\"{1}\"", fieldDataKey.dataList[rowCount], fieldDataValue.dataList[rowCount]);
+                    if (value.StartsWith("[") && value.EndsWith("]"))
+                    {
+                        str = string.Format("\"{0}\":{1}", fieldDataKey.dataList[rowCount], value);
+                    }
+                    else
+                    {
+                        str = string.Format("\"{0}\":\"{1}\"", fieldDataKey.dataList[rowCount], value);
+                    }
                 }
 
                 if (rowCount != fieldDataKey.dataList.Count - 1)
@@ -54,7 +64,7 @@ namespace ExcelExport.Exporter
             writer.WriteLine("}");
         }
 
-        protected override void ExportBase(ExcelSheetData data, StreamWriter writer)
+        protected override void ExportBase(ExcelSheetData data, StreamWriter writer, string exportMode)
         {
             FieldData fieldData = null;
             var rowCount = data.filedList[0].RowCount;
@@ -75,7 +85,7 @@ namespace ExcelExport.Exporter
                 {
                     fieldData = data.filedList[i];
 
-                    if (!fieldData.CanExportTo("c"))
+                    if (!fieldData.CanExportTo(exportMode))
                     {
                         continue;
                     }
@@ -118,16 +128,20 @@ namespace ExcelExport.Exporter
                     appendStr += ",\n";
                 }
 
+
                 appendStr = appendStr.Substring(0, appendStr.Length - 2);
                 writer.WriteLine(appendStr);
 
-                if (rowIndex == rowCount - 1)
+                if (appendStr.Length > 2)
                 {
-                    writer.WriteLine("  }");
-                }
-                else
-                {
-                    writer.WriteLine("  },");
+                    if (rowIndex == rowCount - 1)
+                    {
+                        writer.WriteLine("  }");
+                    }
+                    else
+                    {
+                        writer.WriteLine("  },");
+                    }
                 }
 
             }

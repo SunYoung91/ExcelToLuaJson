@@ -74,7 +74,8 @@ namespace ExcelExport
                     LogUtils.instance.AddLog("读取完成 : " + fileName);
 
                     LogUtils.instance.AddLog("开始导出到JSON");
-                    exporter.DoExport(export_path.Text, "c", "json");
+                    exporter.DoExport(export_path.Text + "\\client\\", "c", "json");
+                    exporter.DoExport(export_path.Text + "\\server\\", "s", "json");
 
                     //LogUtils.instance.AddLog("开始导出到LUA");
                     //exporter.DoExport(export_path.Text + "\\data\\server\\", "s", "lua");

@@ -10,13 +10,18 @@ namespace ExcelExport.Exporter
 {
     public class ExporterBase
     {
+        private string _exportMode;
+        protected ExporterBase(string exportMode)
+        {
+            this._exportMode = exportMode;
+        }
 
-        protected virtual void ExportTiny(ExcelSheetData data,StreamWriter writer)
+        protected virtual void ExportTiny(ExcelSheetData data, StreamWriter writer)
         {
             //nothing
         }
 
-        protected virtual void ExportBase(ExcelSheetData data,StreamWriter writer)
+        protected virtual void ExportBase(ExcelSheetData data, StreamWriter writer, string exportMode)
         {
             //nothing
         }
@@ -39,12 +44,12 @@ namespace ExcelExport.Exporter
         {
             var targetDir = Directory.GetParent(dir).ToString();
             if (!Directory.Exists(targetDir))
-            {        
+            {
                 Directory.CreateDirectory(targetDir);
             }
         }
 
-        public void SaveToFile(ExcelSheetData data , string fileName)
+        public void SaveToFile(ExcelSheetData data, string fileName)
         {
 
             CheckCreateDir(fileName);
@@ -55,10 +60,10 @@ namespace ExcelExport.Exporter
             if (data.exportSchema == "base")
             {
                 AddHeader(data, writer);
-                ExportBase(data, writer);
+                ExportBase(data, writer, this._exportMode);
                 AddEnd(data, writer);
             }
-            else if(data.exportSchema == "tiny")
+            else if (data.exportSchema == "tiny")
             {
                 ExportTiny(data, writer);
             }
