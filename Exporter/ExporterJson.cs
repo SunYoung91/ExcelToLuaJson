@@ -111,15 +111,24 @@ namespace ExcelExport.Exporter
                     }
                     else
                     {
+                        var tempData = fieldData.dataList[rowIndex];
                         //普通字段
                         if (fieldData.fieldType == typeof(string))
                         {
-                            string str = string.Format(" \"{0}\":\"{1}\"", fieldData.fieldName, fieldData.dataList[rowIndex]);
+                            string str;
+                            if (tempData.StartsWith("{") && tempData.EndsWith("}"))
+                            {
+                                str = string.Format(" \"{0}\":{1}", fieldData.fieldName, tempData);
+                            }
+                            else
+                            {
+                                str = string.Format(" \"{0}\":\"{1}\"", fieldData.fieldName, tempData);
+                            }
                             appendStr += str;
                         }
                         else
                         {
-                            string str = string.Format(" \"{0}\":{1}", fieldData.fieldName, fieldData.dataList[rowIndex]);
+                            string str = string.Format(" \"{0}\":{1}", fieldData.fieldName, tempData);
                             appendStr += str;
                         }
 
