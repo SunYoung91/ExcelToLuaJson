@@ -116,7 +116,7 @@ namespace ExcelExport.Exporter
                         if (fieldData.fieldType == typeof(string))
                         {
                             string str;
-                            if (tempData.StartsWith("{") && tempData.EndsWith("}"))
+                            if ((tempData.StartsWith("{") && tempData.EndsWith("}")) || (tempData.StartsWith("[") && tempData.EndsWith("]")))
                             {
                                 str = string.Format(" \"{0}\":{1}", fieldData.fieldName, tempData);
                             }
