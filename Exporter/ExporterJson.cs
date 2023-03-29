@@ -84,7 +84,7 @@ namespace ExcelExport.Exporter
                 for (var i = 0; i < data.filedList.Count; i++)
                 {
                     fieldData = data.filedList[i];
-
+                    bool isAppendEndStr = true;
                     if (!fieldData.CanExportTo(exportMode))
                     {
                         continue;
@@ -128,13 +128,22 @@ namespace ExcelExport.Exporter
                         }
                         else
                         {
-                            string str = string.Format(" \"{0}\":{1}", fieldData.fieldName, tempData);
-                            appendStr += str;
+                            if (tempData != "")
+                            {
+                                string str = string.Format(" \"{0}\":{1}", fieldData.fieldName, tempData);
+                                appendStr += str;
+                            }
+                            else {
+                                isAppendEndStr = false;
+                            }
                         }
 
                     }
 
-                    appendStr += ",\n";
+                    if (isAppendEndStr)
+                    {
+                        appendStr += ",\n";
+                    }
                 }
 
 
